@@ -116,14 +116,17 @@ control worked correctly, and is not evidence of bad provenance.
 **`provenance_status` boundary.** `invalid` means the chain or its records
 were present and a check found a defect in them (a tampered signature, a
 broken or mismatched link, scope escalation, or a credential outside its
-validity window). `missing` means the record set needed to complete the
-check was never supplied — for example a non-root record without its
-parent — which is a different fact from a check that ran and failed.
-`verified` means every check this helper performs on the chain and its
-records passed. `provenance_status` does not cover holder-proof binding:
-this helper replays recorded evidence offline, so it does not check whether
-the original caller proved it held the leaf key, and it never claims that
-absence as either `verified` or `invalid`.
+validity window). `missing` means a chain is claimed but the record set
+needed to complete the check was never fully supplied — for example a
+non-root record without its parent — which is a different fact from a
+check that ran and failed. `not_evaluated` means no delegation chain was
+claimed at all (ACTION-016): there is nothing here for a delegation-
+provenance check to evaluate, which is a different fact again from evidence
+that is missing or invalid. `verified` means every check this helper
+performs on the chain and its records passed. `provenance_status` does not
+cover holder-proof binding: this helper replays recorded evidence offline,
+so it does not check whether the original caller proved it held the leaf
+key, and it never claims that absence as either `verified` or `invalid`.
 
 **`controller_outcome` boundary.** `controller_outcome` is currently a
 claimed test-helper input (`_ActionEvidence.controller_decision`), not
@@ -139,9 +142,9 @@ The five minimum reporting cases agreed for this issue:
 2. Controller rejection: `verified` / `allowed` / `rejected` (ACTION-007).
 3. Invalid signature: `invalid` / `not_evaluated` / `not_evaluated` (ACTION-008).
 4. Missing evidence: `missing` / `not_evaluated` / `not_evaluated` (ACTION-003).
-5. Outside helper scope: `not_evaluated`, not `verified` or `invalid`. Not covered
-   by a case in this change; existing ACTION cases do not exercise a check this
-   helper is structurally unable to perform.
+5. Outside helper scope: `not_evaluated` / `not_evaluated` / `not_evaluated`
+   (ACTION-016) — a check this helper is deliberately not evaluating, never
+   reported as `verified` or `invalid`.
 
 | ID | Level | Requirement | Expected outcome |
 |---|---|---|---|
@@ -158,6 +161,7 @@ The five minimum reporting cases agreed for this issue:
 | ACTION-011 | MUST | Action evidence whose delegatee differs from the subject of the referenced credential is rejected as provenance-invalid. | `invalid` / `not_evaluated` / `not_evaluated` (`provenance_invalid`, `PROVENANCE_LINK_BROKEN`). |
 | ACTION-012 | MUST | Action evidence whose delegation chain contains an expired credential is rejected as provenance-invalid. | `invalid` / `not_evaluated` / `not_evaluated` (`provenance_invalid`, `CREDENTIAL_EXPIRED`). |
 | ACTION-013 | MUST | Action evidence whose delegation chain contains a not-yet-valid credential is rejected as provenance-invalid. | `invalid` / `not_evaluated` / `not_evaluated` (`provenance_invalid`, `CREDENTIAL_NOT_YET_VALID`). |
+| ACTION-016 | MUST | Action evidence naming no delegation chain at all is outside this helper's scope, not a failed or incomplete check. | `not_evaluated` / `not_evaluated` / `not_evaluated` (`outside_helper_scope`, `NO_DELEGATION_CHAIN`). |
 
 ACTION-014 and ACTION-015 are reserved for the historical-replay work
 tracked separately; this issue does not use them.
