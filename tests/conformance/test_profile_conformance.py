@@ -170,6 +170,19 @@ def _verify_action_evidence(
     than guessing at either. controller_outcome is reported only once
     authorization allows the request, for the same reason.
     """
+    # No delegation chain is claimed at all: there is nothing here for a
+    # delegation-provenance check to evaluate. This is a check deliberately
+    # outside this helper's scope, not a failed or incomplete one, so every
+    # axis is not_evaluated rather than invalid or missing.
+    if not chain:
+        return _ActionEvidenceResult(
+            "not_evaluated",
+            "not_evaluated",
+            "not_evaluated",
+            "outside_helper_scope",
+            "NO_DELEGATION_CHAIN",
+        )
+
     # A provenance check needs a full record for every hop the chain claims.
     # A short or empty record set is not evidence that failed verification;
     # it is evidence that was never supplied, so it is reported as missing
@@ -730,6 +743,29 @@ def test_action_013_not_yet_valid_delegation_credential_is_provenance_invalid() 
         "not_evaluated",
         "provenance_invalid",
         "CREDENTIAL_NOT_YET_VALID",
+    )
+
+
+def test_action_016_no_delegation_chain_is_outside_helper_scope() -> None:
+    """ACTION-016: a check deliberately outside this helper's scope.
+
+    No delegation chain is claimed, so there is nothing for a
+    delegation-provenance check to evaluate -- this is not the same as
+    evidence being invalid or incomplete (ACTION-002/003). All three axes
+    are reported as not_evaluated rather than guessed at.
+    """
+    result = _verify_action_evidence(
+        [],
+        [],
+        _ActionEvidence("x", "y", "robot.move"),
+        LocalPolicy.of(["robot.move"]),
+    )
+    assert result == _ActionEvidenceResult(
+        "not_evaluated",
+        "not_evaluated",
+        "not_evaluated",
+        "outside_helper_scope",
+        "NO_DELEGATION_CHAIN",
     )
 
 
